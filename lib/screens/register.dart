@@ -8,7 +8,7 @@ class Register extends StatelessWidget {
     try {
       await AuthService.instance.signInWithGoogle();
       if (!context.mounted) return;
-      Navigator.pushNamed(context, '/profile-setup'); // ← changed
+      Navigator.pushNamed(context, '/profile-setup');
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -30,8 +30,8 @@ class Register extends StatelessWidget {
               children: [
                 // ── Illustration ──
                 Container(
-                  width: 150,
-                  height: 150,
+                  width: 220,
+                  height: 220,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Color(0xFFEFE8E0),
@@ -80,7 +80,7 @@ class Register extends StatelessWidget {
                 _AuthButton(
                   label: 'Continue with E-Mail',
                   icon: Icons.email_outlined,
-                  onTap: () => Navigator.pushNamed(context, '/profile-setup'),
+                  onTap: () => Navigator.pushNamed(context, '/email-register'),
                 ),
 
                 const SizedBox(height: 14),

@@ -9,7 +9,10 @@ import 'screens/login.dart';
 import 'screens/register.dart';
 import 'screens/profile.dart';
 import 'services/auth_service.dart';
+import 'screens/register_email.dart';
 import 'screens/register_profile_setup.dart';
+import 'screens/login_email.dart';
+import 'screens/reset_password.dart';
 
 Future<void> main() async {
 	WidgetsFlutterBinding.ensureInitialized();
@@ -50,8 +53,11 @@ class MyApp extends StatelessWidget {
 				'/appointment': (context) => const Appointment(),
 				'/health': (context) => const Health(),
 				'/explorer': (context) => const Explorer(),
-				'/profile': (context) => const ProfileScreen(),
+				'/profile': (context) => const Profile(),
+        '/email-register': (context) => const RegisterEmail(),
 				'/profile-setup': (context) => const RegisterProfileSetup(),
+				'/email-login': (context) => const LoginEmail(),
+        '/reset-password': (context) => const ResetPassword(),
 			},
 		);
 	}
@@ -67,7 +73,13 @@ class AuthGate extends StatelessWidget {
 		return StreamBuilder<AuthState>(
 			stream: auth.onAuthStateChange,
 			builder: (context, snapshot) {
+        debugPrint('Auth event: ${snapshot.data?.event}, session: ${snapshot.data?.session != null}');
+				final event = snapshot.data?.event;
 				final session = snapshot.data?.session ?? auth.currentSession;
+
+				if (event == AuthChangeEvent.passwordRecovery) {
+					return const ResetPassword();
+				}
 
 				if (session == null) {
 					return const Login();

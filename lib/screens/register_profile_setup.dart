@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RegisterProfileSetup extends StatefulWidget {
   const RegisterProfileSetup({super.key});
@@ -66,12 +67,72 @@ class _RegisterProfileSetupState extends State<RegisterProfileSetup> {
   ];
 
   // ── Submit ────────────────────────────────────────────────────
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: save to Firestore / backend
-      Navigator.pushNamedAndRemoveUntil(
-          context, '/home', (route) => false);
+  bool _isSubmitting = false;
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        throw Exception('No authenticated user found. Please log in again.');
+      }
+
+      await Supabase.instance.client.from('user_profiles').upsert({
+        'id': user.id,
+
+        // Personal
+        'full_name': _fullName.text.trim(),
+        'ic_number': _icNumber.text.trim(),
+        'birth_date': _parseDate(_birthDate.text),
+        'ethnic': _selectedEthnic,
+        'citizenship': _selectedCitizenship,
+        'phone': _phone.text.trim(),
+        'home_address': _homeAddress.text.trim(),
+        'occupation': _job.text.trim(),
+        'work_address': _jobAddress.text.trim(),
+
+        // Medical
+        'risk_factors': _riskFactors.text.trim(),
+        'lnmp': _parseDate(_tha.text),
+        'edd': _parseDate(_tal.text),
+        're_edd': _parseDate(_reEdd.text),
+        'gravida': int.tryParse(_gravida.text.trim()) ?? 0,
+        'para': int.tryParse(_para.text.trim()) ?? 0,
+
+        // Husband
+        'husband_name': _husbandName.text.trim(),
+        'husband_ic': _husbandIc.text.trim(),
+        'husband_phone': _husbandPhone.text.trim(),
+        'husband_job': _husbandJob.text.trim(),
+        'husband_address': _husbandAddress.text.trim(),
+
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save profile: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  // Converts "DD/MM/YYYY" -> "YYYY-MM-DD" for Postgres date columns
+  String? _parseDate(String text) {
+    if (text.isEmpty) return null;
+    final parts = text.split('/');
+    if (parts.length != 3) return null;
+    final day = parts[0].padLeft(2, '0');
+    final month = parts[1].padLeft(2, '0');
+    final year = parts[2];
+    return '$year-$month-$day';
   }
 
   @override
@@ -290,13 +351,15 @@ class _RegisterProfileSetupState extends State<RegisterProfileSetup> {
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: () {
-            if (isLast) {
-              _submit();
-            } else {
-              setState(() => _currentStep++);
-            }
-          },
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  if (isLast) {
+                    _submit();
+                  } else {
+                    setState(() => _currentStep++);
+                  }
+                },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFE8A0A0),
             foregroundColor: Colors.white,
@@ -306,11 +369,20 @@ class _RegisterProfileSetupState extends State<RegisterProfileSetup> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
-          child: Text(
-            isLast ? 'Complete Registration' : 'Next',
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w500),
-          ),
+          child: _isSubmitting
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                  ),
+                )
+              : Text(
+                  isLast ? 'Complete Registration' : 'Next',
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w500),
+                ),
         ),
       ),
     );

@@ -1,3 +1,4 @@
+//Login.dart
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
@@ -7,14 +8,19 @@ class Login extends StatelessWidget {
   Future<void> _handleGoogleSignIn(BuildContext context) async {
     try {
       await AuthService.instance.signInWithGoogle();
-      if (!context.mounted) {
-        return;
+      if (!context.mounted) return;
+
+      final hasProfile = await AuthService.instance.hasCompletedProfile();
+      if (!context.mounted) return;
+
+      if (hasProfile) {
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/profile-setup', (route) => false);
       }
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     } catch (error) {
-      if (!context.mounted) {
-        return;
-      }
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.toString())),
       );
@@ -34,8 +40,8 @@ class Login extends StatelessWidget {
               children: [
                 // ── Illustration ──
                 Container(
-                  width: 150,
-                  height: 150,
+                  width: 220,
+                  height: 220,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Color(0xFFEFE8E0),
@@ -85,9 +91,7 @@ class Login extends StatelessWidget {
                   label: 'Continue with E-Mail',
                   icon: Icons.email_outlined,
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Email sign-in is not set up yet.')),
-                    );
+                    Navigator.pushNamed(context, '/email-login');
                   },
                 ),
 

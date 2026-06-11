@@ -47,6 +47,51 @@ class AuthService {
 		);
 	}
 
+	Future<void> signInWithEmail(String email, String password) async {
+		final response = await Supabase.instance.client.auth.signInWithPassword(
+			email: email,
+			password: password,
+		);
+
+		if (response.user == null) {
+			throw StateError('Login failed. Please check your email and password.');
+		}
+	}
+
+	Future<void> resetPassword(String email) async {
+    await Supabase.instance.client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'io.supabase.mumcare://reset-callback/',
+    );
+  }
+
+  Stream<AuthState> get onAuthStateChange =>
+      Supabase.instance.client.auth.onAuthStateChange;
+
+  Future<void> signUpWithEmail(String email, String password) async {
+    final response = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
+    );
+
+    if (response.user == null) {
+        throw StateError('Sign up failed. Please try again.');
+    }
+  }
+
+  Future<bool> hasCompletedProfile() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return false;
+
+    final result = await Supabase.instance.client
+        .from('user_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    return result != null;
+  }
+
 	Future<void> signOut() async {
 		await Supabase.instance.client.auth.signOut();
 		await GoogleSignIn.instance.signOut();

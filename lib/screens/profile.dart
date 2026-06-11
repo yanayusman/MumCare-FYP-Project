@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../services/auth_service.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class Profile extends StatelessWidget {
+  const Profile({super.key});
 
   final List<_MenuItem> _menuItems = const [
     _MenuItem(label: 'Personal Information', route: '/personal-info'),
