@@ -106,8 +106,8 @@ class _RegisterProfileSetupState extends State<RegisterProfileSetup> {
         'husband_name': _husbandName.text.trim(),
         'husband_ic': _husbandIc.text.trim(),
         'husband_phone': _husbandPhone.text.trim(),
-        'husband_job': _husbandJob.text.trim(),
-        'husband_address': _husbandAddress.text.trim(),
+        'husband_work': _husbandJob.text.trim(),
+        'husband_work_address': _husbandAddress.text.trim(),
 
         'updated_at': DateTime.now().toIso8601String(),
       });

@@ -1,5 +1,6 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
+import 'package:mumcare_app/models/maternal_health.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/appointment.dart';
 import 'screens/explorer.dart';
@@ -13,6 +14,11 @@ import 'screens/register_email.dart';
 import 'screens/register_profile_setup.dart';
 import 'screens/login_email.dart';
 import 'screens/reset_password.dart';
+import 'screens/medical_history.dart';
+import 'screens/personal_info.dart';
+import 'screens/healthcare_provider.dart';
+import 'screens/privacy_security.dart';
+import 'screens/help_support.dart';
 
 Future<void> main() async {
 	WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +64,11 @@ class MyApp extends StatelessWidget {
 				'/profile-setup': (context) => const RegisterProfileSetup(),
 				'/email-login': (context) => const LoginEmail(),
         '/reset-password': (context) => const ResetPassword(),
+				'/medical-history': (context) => const MedicalHistoryScreen(),
+				'/personal-info': (context) => const PersonalInfoScreen(),
+				'/healthcare-provider': (context) => const HealthcareProvider(),
+				'/privacy-security': (context) => const PrivacySecurity(),
+				'/help-support': (context) => const HelpSupport(),
 			},
 		);
 	}

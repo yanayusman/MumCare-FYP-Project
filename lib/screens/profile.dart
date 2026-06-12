@@ -1,18 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../services/auth_service.dart';
+import '../models/maternal_health.dart'; 
 
-class Profile extends StatelessWidget {
+class Profile extends StatefulWidget {
   const Profile({super.key});
 
-  final List<_MenuItem> _menuItems = const [
+  @override
+  State<Profile> createState() => _ProfileState();
+}
+
+class _ProfileState extends State<Profile> {
+  PersonalInfo? _personalInfo;
+  String? _email;
+  bool _isLoading = true;
+  String? _error;
+
+  static const List<_MenuItem> _menuItems = [
     _MenuItem(label: 'Personal Information', route: '/personal-info'),
     _MenuItem(label: 'Medical History', route: '/medical-history'),
     _MenuItem(label: 'Healthcare Provider', route: '/healthcare-provider'),
-    _MenuItem(label: 'Notifications', route: '/notifications'),
+    // _MenuItem(label: 'Notifications', route: '/notifications'),
     _MenuItem(label: 'Privacy & Security', route: '/privacy-security'),
     _MenuItem(label: 'Help & Support', route: '/help-support'),
-  ];
+    _MenuItem(label: 'About Us', route: '/about-us'),
+    _MenuItem(label: 'Terms of Use', route: '/terms-of-use'),
+    _MenuItem(label: 'Privacy Policy', route: '/privacy-policy'),];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+
+      if (user == null) {
+        setState(() {
+          _error = 'User not logged in.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Get email from auth users table
+      _email = user.email;
+
+      // Get profile data from user_profiles table
+      final response = await supabase
+          .from('user_profiles')
+          .select()
+          .eq('id', user.id)
+          .single();
+
+      setState(() {
+        _personalInfo = PersonalInfo.fromMap(response);
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Profile load error: $e');
+      setState(() {
+        _error = 'Failed to load profile: $e'; // show full error on screen
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,20 +80,56 @@ class Profile extends StatelessWidget {
           children: [
             _buildHeader(),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildUserCard(),
-                    const SizedBox(height: 20),
-                    _buildMenuCard(context),
-                    const SizedBox(height: 16),
-                    _buildLogoutButton(context),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFE8A0A0),
+                      ),
+                    )
+                  : _error != null
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _error!,
+                                style: const TextStyle(
+                                  color: Color(0xFF9B8070),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _isLoading = true;
+                                    _error = null;
+                                  });
+                                  _loadProfileData();
+                                },
+                                child: const Text(
+                                  'Retry',
+                                  style: TextStyle(color: Color(0xFFD4537E)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              _buildUserCard(),
+                              const SizedBox(height: 20),
+                              _buildMenuCard(context),
+                              const SizedBox(height: 16),
+                              _buildLogoutButton(context),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
             ),
           ],
         ),
@@ -69,6 +161,11 @@ class Profile extends StatelessWidget {
 
   // ── User Info Card ───────────────────────────────────────────
   Widget _buildUserCard() {
+    final name = _personalInfo?.fullName ?? '—';
+    final email = _email ?? '—';
+    final estDd = _personalInfo?.edd;
+    final colourCode = _personalInfo?.antenatal_colour_code ?? '';
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -92,34 +189,38 @@ class Profile extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
-                'Sarah Aabrek',
-                style: TextStyle(
+                name,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF2D1F17),
                 ),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
-                'sarah.a@gmail.com',
-                style: TextStyle(fontSize: 12, color: Color(0xFF9B8070)),
+                email,
+                style: const TextStyle(
+                    fontSize: 12, color: Color(0xFF9B8070)),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
-                'Due: 28 August 2027',
-                style: TextStyle(fontSize: 12, color: Color(0xFF9B8070)),
+                estDd != null
+                  ? 'Estimate Delivery Due: ${estDd.year}-${estDd.month.toString().padLeft(2, '0')}-${estDd.day.toString().padLeft(2, '0')}'
+                  : 'Due date not set',
+                style: const TextStyle(
+                    fontSize: 12, color: Color(0xFF9B8070)),
               ),
             ],
           ),
         ),
 
-        // Postnatal colour code box
+        // Antenatal colour code box
         Column(
           children: [
             const Text(
-              'Postnatal\nColour Code',
+              'Antenatal\nColour Code',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 10, color: Color(0xFF9B8070)),
             ),
@@ -128,16 +229,51 @@ class Profile extends StatelessWidget {
               width: 52,
               height: 30,
               decoration: BoxDecoration(
-                color: Colors.white,
+                // Show the colour if available, otherwise white
+                color: colourCode.isNotEmpty
+                    ? _parseColour(colourCode)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                     color: const Color(0xFFE8DDD6), width: 0.8),
               ),
+              child: colourCode.isNotEmpty
+                  ? null
+                  : const Center(
+                      child: Text(
+                        '—',
+                        style: TextStyle(
+                            fontSize: 12, color: Color(0xFF9B8070)),
+                      ),
+                    ),
             ),
           ],
         ),
       ],
     );
+  }
+
+  /// Tries to parse antenatal_colour_code as a colour name or hex string.
+  /// Falls back to a neutral pink if unrecognised.
+  Color _parseColour(String code) {
+    final Map<String, Color> namedColours = {
+      'red': Colors.red,
+      'yellow': Colors.yellow,
+      'green': Colors.green,
+      'white': Colors.white,
+    };
+
+    final lower = code.trim().toLowerCase();
+    if (namedColours.containsKey(lower)) return namedColours[lower]!;
+
+    // Try hex (#RRGGBB or RRGGBB)
+    final hex = lower.replaceFirst('#', '');
+    if (hex.length == 6) {
+      final value = int.tryParse('FF$hex', radix: 16);
+      if (value != null) return Color(value);
+    }
+
+    return const Color(0xFFF5E6E0); // fallback
   }
 
   // ── Menu Card ────────────────────────────────────────────────
@@ -251,9 +387,7 @@ class Profile extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               await AuthService.instance.signOut();
-              if (!context.mounted) {
-                return;
-              }
+              if (!context.mounted) return;
               Navigator.pushNamedAndRemoveUntil(
                   context, '/login', (route) => false);
             },
