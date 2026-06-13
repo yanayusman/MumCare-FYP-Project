@@ -10,14 +10,32 @@ class Login extends StatelessWidget {
       await AuthService.instance.signInWithGoogle();
       if (!context.mounted) return;
 
+      // 🔒 Check if user exists in your DB
+      final existsInDB = await AuthService.instance.userExistsInDB();
+      if (!context.mounted) return;
+
+      if (!existsInDB) {
+        // User authenticated with Google but has no profile row — sign them out
+        await AuthService.instance.signOut();
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account not found. Please register first.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return; // Stay on login screen
+      }
+
+      // Existing user — check profile completion as before
       final hasProfile = await AuthService.instance.hasCompletedProfile();
       if (!context.mounted) return;
 
       if (hasProfile) {
         Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
       } else {
-        Navigator.pushNamedAndRemoveUntil(
-            context, '/profile-setup', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(context, '/profile-setup', (route) => false);
       }
     } catch (error) {
       if (!context.mounted) return;

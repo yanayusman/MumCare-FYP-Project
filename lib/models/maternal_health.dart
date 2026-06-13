@@ -67,7 +67,7 @@ class PersonalInfo {
       husbandWorkAddress: map['husband_work_address'] ?? '',
       lnmp: map['lnmp'] != null ? DateTime.tryParse(map['lnmp']) : null,
       edd: map['edd'] != null ? DateTime.tryParse(map['edd']) : null,
-      revisedEdd: map['revised_edd'] != null ? DateTime.tryParse(map['revised_edd']) : null,
+      revisedEdd: map['re_edd'] != null ? DateTime.tryParse(map['re_edd']) : null,
       antenatal_colour_code: map['antenatal_colour_code'] ?? '',
     );
   }
@@ -91,7 +91,7 @@ class PersonalInfo {
       'antenatal_colour_code': antenatal_colour_code,
       'lnmp': lnmp?.toIso8601String(),
       'edd': edd?.toIso8601String(),
-      'revised_edd': revisedEdd?.toIso8601String(),
+      're_edd': revisedEdd?.toIso8601String(),
     };
   }
 }

@@ -50,12 +50,6 @@ class _HelpSupportState extends State<HelpSupport> {
       'How do I change my password?',
       'Go to Profile > Privacy & Security > Change Password.'
     ),
-    (
-      'Who can I contact for medical advice?',
-      'MumCare is a tracking tool, not a medical service. For medical '
-          'advice, please contact your clinic or healthcare provider listed '
-          'under Profile > Healthcare Provider.'
-    ),
   ];
 
   @override
@@ -185,7 +179,7 @@ class _HelpSupportState extends State<HelpSupport> {
 
               const SizedBox(height: 20),
               _sectionTitle('Frequently Asked Questions'),
-              _faqSearchField(),
+              // _faqSearchField(),
               const SizedBox(height: 10),
               if (filteredFaqs.isEmpty)
                 _emptyFaqState()

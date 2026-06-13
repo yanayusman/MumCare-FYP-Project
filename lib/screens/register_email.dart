@@ -1,3 +1,4 @@
+// lib/screens/register_email.dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';

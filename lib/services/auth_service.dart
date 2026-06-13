@@ -92,6 +92,20 @@ class AuthService {
     return result != null;
   }
 
+  // In auth_service.dart
+  Future<bool> userExistsInDB() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return false;
+
+    final response = await Supabase.instance.client
+        .from('user_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle(); // returns null instead of throwing if not found
+
+    return response != null;
+  }
+
 	Future<void> signOut() async {
 		await Supabase.instance.client.auth.signOut();
 		await GoogleSignIn.instance.signOut();

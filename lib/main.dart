@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
 import 'package:mumcare_app/models/maternal_health.dart';
@@ -19,6 +21,9 @@ import 'screens/personal_info.dart';
 import 'screens/healthcare_provider.dart';
 import 'screens/privacy_security.dart';
 import 'screens/help_support.dart';
+import 'screens/terms_of_use.dart';
+import 'screens/about_us.dart';
+import 'screens/privacy_policy.dart';
 
 Future<void> main() async {
 	WidgetsFlutterBinding.ensureInitialized();
@@ -69,36 +74,77 @@ class MyApp extends StatelessWidget {
 				'/healthcare-provider': (context) => const HealthcareProvider(),
 				'/privacy-security': (context) => const PrivacySecurity(),
 				'/help-support': (context) => const HelpSupport(),
+				'/terms-of-use': (context) => const TermsOfUse(),
+				'/about-us': (context) => const AboutUs(),
+				'/privacy-policy': (context) => const PrivacyPolicy(),
 			},
 		);
 	}
 }
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
 	const AuthGate({super.key});
+
+	@override
+	State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+	bool _isPasswordRecovery = false;
+	StreamSubscription<AuthState>? _authSubscription;
+
+	@override
+	void initState() {
+		super.initState();
+		_authSubscription =
+			Supabase.instance.client.auth.onAuthStateChange.listen(_onAuthStateChange);
+	}
+
+	@override
+	void dispose() {
+		_authSubscription?.cancel();
+		super.dispose();
+	}
+
+	void _onAuthStateChange(AuthState data) {
+		final wasRecovery = _isPasswordRecovery;
+
+		if (data.event == AuthChangeEvent.passwordRecovery) {
+			_isPasswordRecovery = true;
+			if (!wasRecovery) {
+				_clearAuthNavigationStack();
+			}
+		} else if (data.event == AuthChangeEvent.signedOut) {
+			_isPasswordRecovery = false;
+		}
+
+		setState(() {});
+	}
+
+	void _clearAuthNavigationStack() {
+		WidgetsBinding.instance.addPostFrameCallback((_) {
+			if (!mounted) return;
+			final navigator = Navigator.of(context);
+			if (navigator.canPop()) {
+				navigator.popUntil((route) => route.isFirst);
+			}
+		});
+	}
 
 	@override
 	Widget build(BuildContext context) {
 		final auth = Supabase.instance.client.auth;
+		final session = auth.currentSession;
 
-		return StreamBuilder<AuthState>(
-			stream: auth.onAuthStateChange,
-			builder: (context, snapshot) {
-        debugPrint('Auth event: ${snapshot.data?.event}, session: ${snapshot.data?.session != null}');
-				final event = snapshot.data?.event;
-				final session = snapshot.data?.session ?? auth.currentSession;
+		if (_isPasswordRecovery) {
+			return const ResetPassword();
+		}
 
-				if (event == AuthChangeEvent.passwordRecovery) {
-					return const ResetPassword();
-				}
+		if (session == null) {
+			return const Login();
+		}
 
-				if (session == null) {
-					return const Login();
-				}
-
-				return const Home();
-			},
-		);
+		return const Home();
 	}
 }
 
