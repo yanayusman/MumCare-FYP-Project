@@ -292,8 +292,8 @@ class _RegisterProfileSetupState extends State<RegisterProfileSetup> {
             icon: Icons.calendar_month_outlined),
         _datePicker('TAL / EDD (Expected Delivery Date)', _tal,
             icon: Icons.child_care_outlined),
-        _datePicker('RE EDD (Revised EDD)', _reEdd,
-            icon: Icons.event_outlined),
+        // _datePicker('RE EDD (Revised EDD)', _reEdd,
+        //     icon: Icons.event_outlined),
         const SizedBox(height: 4),
         _sectionLabel('Obstetric History'),
         Row(

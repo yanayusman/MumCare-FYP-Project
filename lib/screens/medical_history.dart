@@ -228,11 +228,11 @@ class _MedicalHistoryScreenState extends State<MedicalHistoryScreen> {
                           'EDD / TAL (Expected Delivery Date)',
                           _history.edd,
                           (d) => setState(() => _history.edd = d)),
-                      _dateField(
-                          'Revised EDD',
-                          _history.revisedEdd,
-                          (d) => setState(() => _history.revisedEdd = d),
-                          isLast: true),
+                      // _dateField(
+                      //     'Revised EDD',
+                      //     _history.revisedEdd,
+                      //     (d) => setState(() => _history.revisedEdd = d),
+                      //     isLast: true),
                     ]),
                     const SizedBox(height: 12),
                     _riskFactorsCard(),

@@ -791,7 +791,7 @@ class _HomeState extends State<Home> {
         icon: Icons.calendar_today_outlined,
         title: 'Next Appointment',
         subtitle: 'View schedule',
-        route: '/appointments',
+        route: '/appointment',
         iconColor: const Color(0xFF7B86CB),
         bgColor: const Color(0xFFEEEFF9),
       ),
