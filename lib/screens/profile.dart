@@ -229,9 +229,9 @@ class _ProfileState extends State<Profile> {
                               child: Column(
                                 children: [
                                   const SizedBox(height: 16),
-                                  _buildPregnancyCard(),
+                                  // _buildPregnancyCard(),
                                   const SizedBox(height: 16),
-                                  _buildQuickStats(),
+                                  // _buildQuickStats(),
                                   const SizedBox(height: 20),
                                   _buildMenuSection(),
                                   const SizedBox(height: 16),
@@ -280,7 +280,8 @@ class _ProfileState extends State<Profile> {
   // ── Hero card ─────────────────────────────────────────────────
   Widget _buildHeroCard() {
     final name = _personalInfo?.fullName ?? '—';
-    final colourCode = _personalInfo?.antenatal_colour_code ?? '';
+    final rawColour = _personalInfo?.antenatal_colour_code?.trim();
+    final colourCode = (rawColour == null || rawColour.isEmpty) ? 'white' : rawColour;
 
     return Container(
       width: double.infinity,
@@ -349,7 +350,6 @@ class _ProfileState extends State<Profile> {
           Text(_email ?? '—',
               style: const TextStyle(fontSize: 13, color: _kLight)),
 
-          if (colourCode.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -380,7 +380,6 @@ class _ProfileState extends State<Profile> {
               ),
             ),
           ],
-        ],
       ),
     );
   }

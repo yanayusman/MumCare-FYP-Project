@@ -28,8 +28,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   // Controllers
   late TextEditingController _fullName;
   late TextEditingController _icNumber;
-  late TextEditingController _ethnic;
-  late TextEditingController _citizenship;
+  String? _selectedEthnic;
+  String? _selectedCitizenship;
   late TextEditingController _phone;
   late TextEditingController _homeAddress;
   late TextEditingController _occupation;
@@ -43,6 +43,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
   DateTime? _dob;
 
+  final _ethnics = [
+    'Malay', 'Chinese', 'Indian', 'Kadazan', 'Iban',
+    'Bajau', 'Melanau', 'Bidayuh', 'Other Bumiputera', 'Other',
+  ];
+
+  final _citizenships = ['Malaysian', 'Permanent Resident', 'Non-Citizen'];
+
   @override
   void initState() {
     super.initState();
@@ -54,8 +61,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   void _initControllers() {
     _fullName = TextEditingController(text: _info.fullName);
     _icNumber = TextEditingController(text: _info.icNumber);
-    _ethnic = TextEditingController(text: _info.ethnic);
-    _citizenship = TextEditingController(text: _info.citizenship);
+    _selectedEthnic = _info.ethnic.isEmpty ? null : _info.ethnic;
+    _selectedCitizenship = _info.citizenship.isEmpty ? null : _info.citizenship;
     _phone = TextEditingController(text: _info.phoneNumber);
     _homeAddress = TextEditingController(text: _info.homeAddress);
     _occupation = TextEditingController(text: _info.occupation);
@@ -112,8 +119,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         ..fullName = _fullName.text.trim()
         ..icNumber = _icNumber.text.trim()
         ..dateOfBirth = _dob
-        ..ethnic = _ethnic.text.trim()
-        ..citizenship = _citizenship.text.trim()
+        ..ethnic = _selectedEthnic ?? ''
+        ..citizenship = _selectedCitizenship ?? ''
         ..phoneNumber = _phone.text.trim()
         ..homeAddress = _homeAddress.text.trim()
         ..occupation = _occupation.text.trim()
@@ -190,8 +197,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         _textField('IC Number', _icNumber,
                             required: true, keyboardType: TextInputType.number),
                         _dateField('Date of Birth', _dob, _pickDob),
-                        _textField('Ethnic Group', _ethnic),
-                        _textField('Citizenship', _citizenship),
+                        _dropdown('Ethnic Group', _ethnics, _selectedEthnic,
+                            (v) => setState(() => _selectedEthnic = v)),
+                        _dropdown('Citizenship', _citizenships, _selectedCitizenship,
+                            (v) => setState(() => _selectedCitizenship = v)),
                         _textField('Phone Number', _phone,
                             keyboardType: TextInputType.phone),
                         _textField('Home Address', _homeAddress,
@@ -308,6 +317,36 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     );
   }
 
+  Widget _dropdown(
+    String label,
+    List<String> items,
+    String? value,
+    ValueChanged<String?> onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        onChanged: onChanged,
+        style: const TextStyle(fontSize: 14, color: _kDark),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(fontSize: 13, color: _kLight),
+          isDense: true,
+          border: const UnderlineInputBorder(
+            borderSide: BorderSide(color: _kBorder),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: _kPrimary, width: 1.4),
+          ),
+        ),
+        items: items
+            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .toList(),
+      ),
+    );
+  }
+
   Widget _dateField(
     String label,
     DateTime? value,
@@ -349,8 +388,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   void dispose() {
     _fullName.dispose();
     _icNumber.dispose();
-    _ethnic.dispose();
-    _citizenship.dispose();
     _phone.dispose();
     _homeAddress.dispose();
     _occupation.dispose();

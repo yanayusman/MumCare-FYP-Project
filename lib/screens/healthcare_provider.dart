@@ -135,7 +135,7 @@ class _HealthcareProviderScreenState extends State<HealthcareProvider> {
                     _sectionTitle('Assigned Nurse / Midwife'),
                     _card([
                       _textField('Nurse / Midwife Name (Jururawat Y/M)',
-                          _nurseName, isLast: true),
+                          _nurseName, isLast: true, readOnly: true),   // <-- add readOnly: true
                     ]),
                     const SizedBox(height: 20),
                     _sectionTitle('Preferred Place of Delivery'),
@@ -234,17 +234,26 @@ class _HealthcareProviderScreenState extends State<HealthcareProvider> {
     TextEditingController controller, {
     int maxLines = 1,
     bool isLast = false,
+    bool readOnly = false,   // <-- add this
   }) {
     return Padding(
       padding: EdgeInsets.only(top: 12, bottom: isLast ? 12 : 0),
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
-        style: const TextStyle(fontSize: 14, color: _kDark),
+        readOnly: readOnly,   // <-- add this
+        style: TextStyle(
+          fontSize: 14,
+          color: readOnly ? _kLight : _kDark,  // <-- dim the text when read-only
+        ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(fontSize: 13, color: _kLight),
           isDense: true,
+          filled: readOnly,                          // <-- add this
+          fillColor: readOnly                        // <-- add this
+              ? const Color(0xFFF5F0ED)
+              : Colors.transparent,
           border: const UnderlineInputBorder(
             borderSide: BorderSide(color: _kBorder),
           ),

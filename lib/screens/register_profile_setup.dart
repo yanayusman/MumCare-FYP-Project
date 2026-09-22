@@ -289,9 +289,19 @@ class _RegisterProfileSetupState extends State<RegisterProfileSetup> {
         const SizedBox(height: 4),
         _sectionLabel('Pregnancy Dates'),
         _datePicker('THA / LNMP (Last Normal Menstrual Period)', _tha,
-            icon: Icons.calendar_month_outlined),
-        _datePicker('TAL / EDD (Expected Delivery Date)', _tal,
-            icon: Icons.child_care_outlined),
+          icon: Icons.calendar_month_outlined,
+          onDatePicked: (picked) {
+            // Auto-calculate EDD = LNMP + 280 days (Naegele's rule)
+            final edd = picked.add(const Duration(days: 280));
+            _tal.text =
+                '${edd.day.toString().padLeft(2, '0')}/'
+                '${edd.month.toString().padLeft(2, '0')}/'
+                '${edd.year}';
+          }),
+          _datePicker('TAL / EDD (Expected Delivery Date)', _tal,
+              icon: Icons.child_care_outlined,
+              // No onDatePicked here — user can still manually override
+          ),
         // _datePicker('RE EDD (Revised EDD)', _reEdd,
         //     icon: Icons.event_outlined),
         const SizedBox(height: 4),
@@ -453,38 +463,43 @@ class _RegisterProfileSetupState extends State<RegisterProfileSetup> {
     );
   }
 
-  Widget _datePicker(String label, TextEditingController ctrl,
-      {IconData? icon}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: TextFormField(
-        controller: ctrl,
-        readOnly: true,
-        validator: (v) =>
-            (v == null || v.isEmpty) ? 'Please select $label' : null,
-        onTap: () async {
-          final picked = await showDatePicker(
-            context: context,
-            initialDate: DateTime.now(),
-            firstDate: DateTime(1900),
-            lastDate: DateTime(2100),
-            builder: (ctx, child) => Theme(
-              data: Theme.of(ctx).copyWith(
-                colorScheme: const ColorScheme.light(
-                  primary: Color(0xFFE8A0A0),
-                  onPrimary: Colors.white,
+  Widget _datePicker(
+    String label,
+    TextEditingController ctrl, {
+    IconData? icon,
+    void Function(DateTime picked)? onDatePicked, // 👈 new
+  }) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: TextFormField(
+          controller: ctrl,
+          readOnly: true,
+          validator: (v) =>
+              (v == null || v.isEmpty) ? 'Please select $label' : null,
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: DateTime.now(),
+              firstDate: DateTime(1900),
+              lastDate: DateTime(2100),
+              builder: (ctx, child) => Theme(
+                data: Theme.of(ctx).copyWith(
+                  colorScheme: const ColorScheme.light(
+                    primary: Color(0xFFE8A0A0),
+                    onPrimary: Colors.white,
+                  ),
                 ),
+                child: child!,
               ),
-              child: child!,
-            ),
-          );
-          if (picked != null) {
-            ctrl.text =
-                '${picked.day.toString().padLeft(2, '0')}/'
-                '${picked.month.toString().padLeft(2, '0')}/'
-                '${picked.year}';
-          }
-        },
+            );
+            if (picked != null) {
+              ctrl.text =
+                  '${picked.day.toString().padLeft(2, '0')}/'
+                  '${picked.month.toString().padLeft(2, '0')}/'
+                  '${picked.year}';
+              onDatePicked?.call(picked); // 👈 fire the callback
+            }
+          },
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(

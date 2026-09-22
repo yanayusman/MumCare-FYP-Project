@@ -10,11 +10,32 @@ const _kLight = Color(0xFF9B8070);
 const _kBorder = Color(0xFFE8DDD6);
 const _kPrimary = Color(0xFFE8A0A0);
 const _kSecondary = Color(0xFFD4537E);
+const _kGreen = Color(0xFF4CAF6D);
 
 const _months = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
+
+// ── Time slots ────────────────────────────────────────────────
+const _kTimeSlots = [
+  '8:00 AM', '8:30 AM', '9:00 AM', '9:30 AM',
+  '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+  '12:00 PM', '12:30 PM',
+  '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+  '4:00 PM', '4:30 PM',
+];
+
+TimeOfDay _parseSlot(String slot) {
+  final parts = slot.split(' ');
+  final hm = parts[0].split(':');
+  var hour = int.parse(hm[0]);
+  final minute = int.parse(hm[1]);
+  final isPm = parts[1] == 'PM';
+  if (isPm && hour != 12) hour += 12;
+  if (!isPm && hour == 12) hour = 0;
+  return TimeOfDay(hour: hour, minute: minute);
+}
 
 class Appointment extends StatefulWidget {
   const Appointment({super.key});
@@ -433,10 +454,10 @@ class _AppointmentState extends State<Appointment> {
       if (appt.status == AppointmentStatus.rescheduled &&
           appt.preferredDate != null) {
         secondary =
-            'Requested: ${_formatDate(appt.preferredDate!)}';
+            'Requested: ${_formatDateTime(appt.preferredDate!)}';
       }
     } else if (appt.preferredDate != null) {
-      primary = 'Preferred: ${_formatDate(appt.preferredDate!)}';
+      primary = 'Preferred: ${_formatDateTime(appt.preferredDate!)}';
       secondary = 'Awaiting nurse confirmation';
     } else {
       primary = 'Date to be confirmed';
@@ -527,6 +548,108 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
+// ── Time slot picker ──────────────────────────────────────────
+// Mirrors the picker used on the provider side so patients pick
+// from the same set of bookable slots.
+
+class _TimeSlotPicker extends StatelessWidget {
+  final String? selected;
+  final ValueChanged<String> onSelect;
+
+  const _TimeSlotPicker({required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    final morningSlots = _kTimeSlots.where((s) => s.contains('AM')).toList();
+    final afternoonSlots = _kTimeSlots.where((s) => s.contains('PM')).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SlotGroup(
+          label: '🌤  Morning',
+          slots: morningSlots,
+          selected: selected,
+          onSelect: onSelect,
+        ),
+        const SizedBox(height: 12),
+        _SlotGroup(
+          label: '☀️  Afternoon',
+          slots: afternoonSlots,
+          selected: selected,
+          onSelect: onSelect,
+        ),
+      ],
+    );
+  }
+}
+
+class _SlotGroup extends StatelessWidget {
+  final String label;
+  final List<String> slots;
+  final String? selected;
+  final ValueChanged<String> onSelect;
+
+  const _SlotGroup({
+    required this.label,
+    required this.slots,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: _kLight,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: slots.map((slot) {
+            final isSelected = selected == slot;
+            return InkWell(
+              onTap: () => onSelect(slot),
+              borderRadius: BorderRadius.circular(10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: isSelected ? _kSecondary : _kBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected ? _kSecondary : _kBorder,
+                    width: isSelected ? 1.5 : 0.8,
+                  ),
+                ),
+                child: Text(
+                  slot,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? Colors.white : _kDark,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
+
 // ── Request / Reschedule sheet ─────────────────────────────────
 
 typedef _SubmitFn = Future<void> Function(
@@ -564,6 +687,7 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
   String? _selectedDoctor;
   late final TextEditingController _notes;
   DateTime? _preferredDate;
+  String? _preferredSlot;
   bool _submitting = false;
 
   @override
@@ -616,20 +740,36 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
       return;
     }
 
+    if (_preferredSlot == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your preferred time')),
+      );
+      return;
+    }
+
+    final tod = _parseSlot(_preferredSlot!);
+    final preferredDateTime = DateTime(
+      _preferredDate!.year,
+      _preferredDate!.month,
+      _preferredDate!.day,
+      tod.hour,
+      tod.minute,
+    );
+
     setState(() => _submitting = true);
     try {
       if (widget.onSubmit != null) {
         await widget.onSubmit!(
           _type,
           _selectedDoctor ?? '', 
-          _preferredDate!,
+          preferredDateTime,
           _notes.text.trim(),
         );
       } else {
         await AppointmentService.instance.createRequest(
           type: _type,
           doctorName: _selectedDoctor ?? '',
-          preferredDate: _preferredDate!,
+          preferredDate: preferredDateTime,
           notes: _notes.text.trim(),
         );
       }
@@ -653,19 +793,19 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
       padding: EdgeInsets.only(bottom: bottom),
       child: Container(
         margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Header ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 12, 0),
+                child: Row(
                   children: [
                     Expanded(
                       child: Text(
@@ -683,94 +823,152 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Choose one preferred date. Your nurse will confirm the final schedule.',
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Choose your preferred date and time. Your nurse will '
+                  'confirm the final schedule.',
                   style: TextStyle(fontSize: 13, color: _kLight, height: 1.4),
                 ),
-                const SizedBox(height: 20),
-                if (widget.lockType)
-                  _readOnlyField('Appointment Type', _type)
-                else
-                  DropdownButtonFormField<String>(
-                    initialValue: _type,
-                    decoration: _inputDecoration('Appointment Type'),
-                    items: AppointmentModel.appointmentTypes
-                        .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _type = v!),
-                  ),
-                const SizedBox(height: 14),
-                DropdownButtonFormField<String>(
-                  value: _selectedDoctor,
-                  decoration: _inputDecoration('Doctor / Provider'),
-                  isExpanded: true,
-                  items: AppointmentModel.doctorOptions
-                      .map((name) => DropdownMenuItem(
-                            value: name,
-                            child: Text(
-                              name,
-                              style: const TextStyle(fontSize: 14, color: _kDark),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedDoctor = v),
-                  validator: (v) => v == null ? 'Please select a doctor' : null,
-                ),
-                const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: _pickDate,
-                  child: InputDecorator(
-                    decoration: _inputDecoration('Preferred Date *'),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _preferredDate != null
-                              ? _formatDate(_preferredDate!)
-                              : 'Select a date',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: _preferredDate != null ? _kDark : _kLight,
+              ),
+              const SizedBox(height: 4),
+              const Divider(color: _kBorder, thickness: 0.8),
+
+              // ── Scrollable form body ──
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (widget.lockType)
+                        _readOnlyField('Appointment Type', _type)
+                      else
+                        DropdownButtonFormField<String>(
+                          initialValue: _type,
+                          decoration: _inputDecoration('Appointment Type'),
+                          items: AppointmentModel.appointmentTypes
+                              .map((t) =>
+                                  DropdownMenuItem(value: t, child: Text(t)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _type = v!),
+                        ),
+                      const SizedBox(height: 14),
+                      DropdownButtonFormField<String>(
+                        value: _selectedDoctor,
+                        decoration: _inputDecoration('Doctor / Provider'),
+                        isExpanded: true,
+                        items: AppointmentModel.doctorOptions
+                            .map((name) => DropdownMenuItem(
+                                  value: name,
+                                  child: Text(
+                                    name,
+                                    style: const TextStyle(
+                                        fontSize: 14, color: _kDark),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ))
+                            .toList(),
+                        onChanged: (v) => setState(() => _selectedDoctor = v),
+                        validator: (v) =>
+                            v == null ? 'Please select a doctor' : null,
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Preferred date ──
+                      GestureDetector(
+                        onTap: _pickDate,
+                        child: InputDecorator(
+                          decoration: _inputDecoration('Preferred Date *'),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _preferredDate != null
+                                    ? _formatDate(_preferredDate!)
+                                    : 'Select a date',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: _preferredDate != null
+                                      ? _kDark
+                                      : _kLight,
+                                ),
+                              ),
+                              const Icon(Icons.calendar_today_outlined,
+                                  size: 18, color: _kLight),
+                            ],
                           ),
                         ),
-                        const Icon(Icons.calendar_today_outlined,
-                            size: 18, color: _kLight),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextFormField(
-                  controller: _notes,
-                  maxLines: 2,
-                  decoration: _inputDecoration('Notes (optional)'),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _submitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kSecondary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: _submitting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                      ),
+                      const SizedBox(height: 18),
+
+                      // ── Preferred time slot ──
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Preferred Time *',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _kLight,
+                            fontWeight: FontWeight.w500,
                           ),
-                        )
-                      : Text(widget.submitLabel),
+                        ),
+                      ),
+                      _TimeSlotPicker(
+                        selected: _preferredSlot,
+                        onSelect: (s) => setState(() => _preferredSlot = s),
+                      ),
+                      if (_preferredSlot != null) ...[
+                        const SizedBox(height: 8),
+                        Row(children: [
+                          const Icon(Icons.check_circle,
+                              size: 14, color: _kGreen),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Selected: $_preferredSlot',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _kGreen,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ]),
+                      ],
+                      const SizedBox(height: 14),
+
+                      TextFormField(
+                        controller: _notes,
+                        maxLines: 2,
+                        decoration: _inputDecoration('Notes (optional)'),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _submitting ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kSecondary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: _submitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(widget.submitLabel),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -851,12 +1049,10 @@ class _AppointmentDetailsDialog extends StatelessWidget {
               _detailRow(
                 Icons.date_range,
                 appt.status == AppointmentStatus.rescheduled
-                    ? 'Requested Date'
-                    : 'Preferred Date',
-                _formatDate(appt.preferredDate!),
+                    ? 'Requested Date & Time'
+                    : 'Preferred Date & Time',
+                _formatDateTime(appt.preferredDate!),
               ),
-            if (appt.location != null && appt.location!.isNotEmpty)
-              _detailRow(Icons.location_on_outlined, 'Location', appt.location!),
             if (appt.notes != null && appt.notes!.isNotEmpty)
               _detailRow(Icons.notes_outlined, 'Notes', appt.notes!),
             const SizedBox(height: 20),
