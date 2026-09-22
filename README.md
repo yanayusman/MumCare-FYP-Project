@@ -51,20 +51,20 @@ lib/
 
 ---
 
-## ✅ Screens Built
+## Screens Built
 
-### 1. **Login Screen** ✅
+### 1. **Login Screen** 
 - Logo + app branding
 - "Continue with E-Mail" button
 - "Continue with Google" button
 - "Sign up" link → Register screen
 
-### 2. **Register Screen** ✅
+### 2. **Register Screen** 
 - Same layout as Login
 - Google & Email sign-in options
 - "Already have account?" link
 
-### 3. **Profile Setup Screen** ✅
+### 3. **Profile Setup Screen** 
 **3-Step Multi-Form:**
 
 **Step 1 — Personal Information**
@@ -85,7 +85,7 @@ lib/
 - Phone Number
 - Occupation, Work Address
 
-### 4. **Home Screen (Dashboard)** ✅
+### 4. **Home Screen (Dashboard)** 
 - User greeting ("Hi, Sarah!")
 - Pregnancy progress card (week tracker + progress bar)
 - Quick action grid (4 cards):
@@ -97,7 +97,7 @@ lib/
 - Recent Activity section
 - Bottom navigation bar
 
-### 5. **Appointments Screen** ✅
+### 5. **Appointments Screen** 
 - Toggle: Upcoming / Past tabs
 - Appointment cards showing:
   - Type (Checkup, Ultrasound, etc.)
@@ -106,7 +106,7 @@ lib/
   - "View Details" & "Reschedule" buttons
 - Add appointment button (+)
 
-### 6. **Health Monitoring Screen** ✅
+### 6. **Health Monitoring Screen** 
 - Vitals grid (2x2):
   - Blood Pressure (120/80)
   - Weight (68 kg)
@@ -116,14 +116,14 @@ lib/
 - Recent Symptoms list
 - Add health record button (+)
 
-### 7. **Explorer Screen** ✅
+### 7. **Explorer Screen** 
 - Search bar
 - Filter chips (All, Medication, Nutrition, Exercise)
 - Featured article card with image overlay
 - Article list with navigation arrows
 - Click to view full articles (routing ready)
 
-### 8. **Profile Screen** ✅
+### 8. **Profile Screen** 
 - User info card (avatar, name, email, due date, postnatal code)
 - Settings menu (6 items):
   - Personal Information
@@ -134,7 +134,7 @@ lib/
   - Help & Support
 - Logout button with confirmation dialog
 
-### 9. **Bottom Navigation Bar** ✅
+### 9. **Bottom Navigation Bar** 
 - Reusable widget (imported in all screens)
 - 5 nav items:
   - Appointments
@@ -207,9 +207,9 @@ flutter run -d chrome
 flutter run -d emulator-id
 ```
 
----
+<!-- --- -->
 
-## 📋 Screens Remaining to Build
+<!-- ## 📋 Screens Remaining to Build
 
 | Screen | Status | Priority |
 |---|---|---|
@@ -221,9 +221,9 @@ flutter run -d emulator-id
 | Medical History | ⬜ | Medium |
 | Healthcare Provider | ⬜ | Medium |
 | Privacy & Security | ⬜ | Low |
-| Help & Support | ⬜ | Low |
+| Help & Support | ⬜ | Low | -->
 
----
+<!-- ---
 
 ## 🔄 Integration Checklist
 
@@ -240,9 +240,9 @@ flutter run -d emulator-id
 - [ ] Email verification (optional)
 - [ ] Password reset flow (optional)
 
----
+--- -->
 
-## 🎯 Next Steps (Recommended Order)
+<!-- ## 🎯 Next Steps (Recommended Order)
 
 1. **Wire Email Login** → `email_login_screen.dart` with Supabase
 2. **Save Profile Setup** → POST to `user_profiles` table on form completion
@@ -250,9 +250,9 @@ flutter run -d emulator-id
 4. **Load Health Data** → Fetch weight trends & vitals from database
 5. **Build Nutrition Screen** → Add nutrition tracking UI
 6. **Build Medicine Screen** → Add medication/pill tracker UI
-7. **Test end-to-end** → Login → Profile setup → Home → Browse screens
+7. **Test end-to-end** → Login → Profile setup → Home → Browse screens -->
 
----
+<!-- ---
 
 ## 📚 Useful Resources
 
@@ -260,12 +260,12 @@ flutter run -d emulator-id
 - **Flutter Supabase Package:** https://pub.dev/packages/supabase_flutter
 - **Google Sign-In for Flutter:** https://pub.dev/packages/google_sign_in
 
----
+--- -->
 
 ## 💡 Notes
 
 - All screens have **bottom navigation** using the shared `BottomNavBar` widget
-- **No Firebase** — using Supabase PostgreSQL instead
+- Supabase PostgreSQL instead
 - **Form validation** is built-in on profile setup & login screens
 - **Charts** use Flutter's built-in `CustomPaint` (no external charting library needed)
 - **Color palette** is consistent across all screens
