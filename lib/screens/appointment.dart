@@ -702,9 +702,11 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
     super.initState();
     _type = widget.initialType ?? AppointmentModel.appointmentTypes.first;
 
-    _selectedDoctor = AppointmentModel.doctorOptions.contains(widget.doctorDefault)
-        ? widget.doctorDefault
-        : AppointmentModel.doctorOptions.first;
+    // dr/provider is read-only
+    final assigned = widget.doctorDefault.trim();
+    _selectedDoctor = (assigned.isEmpty || assigned == 'Dr.')
+        ? AppointmentModel.doctorOptions.first
+        : assigned;
 
     _notes = TextEditingController();
   }
@@ -800,11 +802,6 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
-      // Local Scaffold so any ScaffoldMessenger.of(context) call made by
-      // descendants (e.g. the "Failed: $e" SnackBar) resolves to THIS
-      // Scaffold instead of bubbling up to the page behind the sheet.
-      // Without this, SnackBars render behind the modal and are invisible
-      // until the sheet is dismissed.
       child: Scaffold(
         backgroundColor: Colors.transparent,
         resizeToAvoidBottomInset: false,
@@ -819,7 +816,7 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Header ──
+                // header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 12, 0),
                   child: Row(
@@ -852,7 +849,7 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
                 const SizedBox(height: 4),
                 const Divider(color: _kBorder, thickness: 0.8),
 
-                // ── Scrollable form body ──
+                // scrollable form
                 Flexible(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -872,28 +869,14 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
                             onChanged: (v) => setState(() => _type = v!),
                           ),
                         const SizedBox(height: 14),
-                        DropdownButtonFormField<String>(
-                          value: _selectedDoctor,
-                          decoration: _inputDecoration('Doctor / Provider'),
-                          isExpanded: true,
-                          items: AppointmentModel.doctorOptions
-                              .map((name) => DropdownMenuItem(
-                                    value: name,
-                                    child: Text(
-                                      name,
-                                      style: const TextStyle(
-                                          fontSize: 14, color: _kDark),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ))
-                              .toList(),
-                          onChanged: (v) => setState(() => _selectedDoctor = v),
-                          validator: (v) =>
-                              v == null ? 'Please select a doctor' : null,
+                        _readOnlyField(
+                          'Doctor / Provider',
+                          _selectedDoctor ?? '',
+                          icon: Icons.lock_outline,
                         ),
                         const SizedBox(height: 14),
 
-                        // ── Preferred date ──
+                        // preferred date 
                         GestureDetector(
                           onTap: _pickDate,
                           child: InputDecorator(
@@ -929,7 +912,7 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
                         ),
                         const SizedBox(height: 18),
 
-                        // ── Preferred time slot ──
+                        // preferred time slot
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Text(
@@ -1041,15 +1024,29 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
     );
   }
 
-  Widget _readOnlyField(String label, String value) {
+  Widget _readOnlyField(String label, String value, {IconData? icon}) {
     return InputDecorator(
-      decoration: _inputDecoration(label),
-      child: Text(value, style: const TextStyle(fontSize: 14, color: _kDark)),
+      decoration: _inputDecoration(label).copyWith(
+        filled: true,
+        fillColor: _kBg,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14, color: _kDark),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (icon != null) Icon(icon, size: 16, color: _kLight),
+        ],
+      ),
     );
   }
 }
 
-// ── Details dialog ─────────────────────────────────────────────
+// details dialog
 
 class _AppointmentDetailsDialog extends StatelessWidget {
   final AppointmentModel appointment;
@@ -1138,7 +1135,7 @@ class _AppointmentDetailsDialog extends StatelessWidget {
   }
 }
 
-// ── Date helpers ───────────────────────────────────────────────
+// date helpers  
 
 String _formatDate(DateTime dt) {
   return '${dt.day} ${_months[dt.month - 1]} ${dt.year}';
