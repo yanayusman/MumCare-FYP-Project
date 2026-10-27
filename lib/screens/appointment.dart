@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../models/appointment.dart';
 import '../services/appointment_service.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -18,7 +17,7 @@ const _months = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-// ── Time slots ────────────────────────────────────────────────
+// time slots
 const _kTimeSlots = [
   '8:00 AM', '8:30 AM', '9:00 AM', '9:30 AM',
   '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -549,9 +548,7 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-// ── Time slot picker ──────────────────────────────────────────
-// Mirrors the picker used on the provider side so patients pick
-// from the same set of bookable slots.
+// time slot picker 
 
 class _TimeSlotPicker extends StatelessWidget {
   final String? selected;
@@ -651,7 +648,7 @@ class _SlotGroup extends StatelessWidget {
   }
 }
 
-// ── Request / Reschedule sheet ─────────────────────────────────
+// req/reschedule form 
 
 typedef _SubmitFn = Future<void> Function(
   String type,
@@ -691,9 +688,6 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
   String? _preferredSlot;
   bool _submitting = false;
 
-  // Inline validation errors for the date / time slot, so they render
-  // right on the field instead of relying on a SnackBar that can end
-  // up hidden behind this modal sheet.
   String? _dateError;
   String? _slotError;
 
@@ -702,7 +696,7 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
     super.initState();
     _type = widget.initialType ?? AppointmentModel.appointmentTypes.first;
 
-    // dr/provider is read-only
+    // dr is read-only
     final assigned = widget.doctorDefault.trim();
     _selectedDoctor = (assigned.isEmpty || assigned == 'Dr.')
         ? AppointmentModel.doctorOptions.first
@@ -868,12 +862,12 @@ class _AppointmentRequestSheetState extends State<_AppointmentRequestSheet> {
                                 .toList(),
                             onChanged: (v) => setState(() => _type = v!),
                           ),
-                        const SizedBox(height: 14),
-                        _readOnlyField(
-                          'Doctor / Provider',
-                          _selectedDoctor ?? '',
-                          icon: Icons.lock_outline,
-                        ),
+                        // const SizedBox(height: 14),
+                        // _readOnlyField(
+                        //   'Doctor',
+                        //   _selectedDoctor ?? '',
+                        //   icon: Icons.lock_outline,
+                        // ),
                         const SizedBox(height: 14),
 
                         // preferred date 
@@ -1135,7 +1129,7 @@ class _AppointmentDetailsDialog extends StatelessWidget {
   }
 }
 
-// date helpers  
+// date  
 
 String _formatDate(DateTime dt) {
   return '${dt.day} ${_months[dt.month - 1]} ${dt.year}';
